@@ -1,0 +1,272 @@
+#!/usr/bin/python
+""" Don't forget to read: http://www.wikia.com/api/v1/ """
+try:
+	from getopt import getopt
+	import json
+	import re
+	import requests
+	import traceback
+	import sys
+except ImportError as e:
+	print e
+	print 'Ensure that /usr/bin/python is a python 2.7 shell.'
+	exit(99)
+
+class rswiki:
+
+	# the search API requires two arguments, 'limit' and 'query'.
+	# set 'limit' param to 1 just for the sake of bandwidth.
+	# The return as dump:
+	#	dump['items'] = a list of items (size = limit) ordered by relevance
+	# 	dump['items'][0]['url'] = link to page.
+	# 	dump['items'][0]['id'] = id of page
+	# If an error occured (e.g., no match for search criteria),
+	# 	dump['exception'] exists and has:
+	#		.['code'] = the error code (e.g. 404)
+	#		.['message'] = the corresponding message to the error code
+	#		.['details']
+	# See also 'namespace' argument for expansion to talk pages
+	_API_SEARCH_URL = 'http://runescape.wikia.com/api/v1/Search/List'
+
+	# content requires one parameter - id. Get this from the search
+	# API.
+	# The return as dump:
+	#	dump['sections'] = list of sections, where dump['sections'][i]['level']
+	#					dictates how deep the section is, be it:
+	#						0 = intro
+	#						1 = section
+	#						2 = subsection
+	#					And so on
+	#	dump['sections'][0]['title'] = name of article
+	#	dump['sections'][0]['content'] = a list of paragraphs with varying types:
+	#						.['type'] = 'paragraph'
+	#						-> .['text'] exists and is a textual representation
+	#							of the paragraph.
+	#						.['type'] = 'list'
+	#						-> .['elements'] exists and is an array of elements
+	#							of the list. Each element contains a 'text' attribute
+	#							and potentially another 'elements' attribute, which
+	#							is has the properties of .['elements']
+	_API_CONTENT_URL = 'http://runescape.wikia.com/api/v1/Articles/AsSimpleJson'
+
+	# content requires one parameter - id. Get this from the search
+	# API.
+	# The return as dump:
+	# 	dump[id]['id']
+	#	dump[id]['title']
+	#	dump[id]['abstract'] - the text of the article
+	_API_CONTENT2_URL = 'http://runescape.wikia.com/api/v1/Articles/Details'
+
+	# where are the articles stored
+	_ART_URL = 'http://runescape.wikia.com/wiki/'
+
+	# default length variables
+	num_chars = 500
+	num_paras = 2
+
+	# last page information
+	# content_type takes 'abstract' or 'section'
+	_content = None
+	_content_type = None
+	_id = None
+	_url = None
+
+	# formatting information
+	_indent = '    '
+	_bullet = '*'
+
+
+	def __init__(self, article_name, content_type = 'abstract', num_chars = 0):
+		self.make_content(article_name, content_type = content_type, num_chars = num_chars)
+
+	# this pipes params to the appropriate content getter
+	def _make_content(self, params, content_type = 'abstract'):
+		if content_type is 'abstract':
+			API = self._API_CONTENT2_URL
+		elif content_type is 'section':
+			API = self._API_CONTENT_URL
+
+		# this doesn't need to be handled. pseudo 404s are returned as 
+		# json content. True 404s will crash the program (however, if
+		# true 404s appear, the program should stop running...!)
+		content_dump = requests.get(API, params = params).json()
+
+		try:
+			if content_type is 'abstract':
+				self._content = \
+					content_dump['items'][str(params['ids'])]['abstract']
+			elif content_type is 'section':
+				self._content = content_dump['sections'][0]['content']
+		except:
+			self._content = None
+			traceback.print_exc()
+			return
+
+		self._content_type = content_type
+
+	# hand in the top level elements list, that is:
+	# 	dump['sections'][0]['content'][i]['elements']
+	# for some valid i
+	def _parse_content_list(clist, depth = 0):
+		out = _indent*depth + _bullet + clist['text'] + '\n'
+		if not clist['elements']:
+			return out
+		else:
+			out += _parse_content_list(clist['elements'], depth + 1)
+
+		return out
+
+	def make_content(self, article_name, content_type = 'abstract', num_chars = 0):
+		self.search(article_name)
+
+		if self._id is None:
+			self._content = None
+			return
+
+		content_params = {}
+		
+		if content_type is 'abstract':
+			content_params['ids'] = self._id
+			content_params['abstract'] = \
+				self.num_chars if num_chars is 0 else num_chars
+		else:
+			content_params['id'] = self.id
+
+		self._make_content(content_params, content_type = content_type)
+		# a fix for some template text
+		if not self._content.find('[talk]') is -1:
+			self._content = self._content.split('[talk]', 1)[1].strip()
+
+	def get_content(self):
+		return self._content
+
+	def get_id(self):
+		return self._id
+	
+	def get_paragraphs(self, num_paras = 0):
+		if self._content_type is None:
+			return None
+
+		if self._content_type is 'abstract':
+			return self._content
+
+		out = ''
+
+		# if num_paras is -1, return all paragraphs
+		if num_paras is -1:
+			num_paras = len(self._content)
+		# if num_paras is 0, return the default num of paras
+		elif num_paras is 0:
+			num_paras = self.num_paras
+
+		para_counter = 0
+
+		for c in self._content:
+			if para_counter >= num_paras:
+				break
+			if c['type'] == 'paragraph':
+				out += c['text'] + '\n'
+			elif c['type'] == 'list':
+				out += self._parse_content_list(c['elements'])
+
+			para_counter += 1
+
+		return out
+
+
+	def get_paragraphs_by_char_limit(self, num_chars = 0):
+		if self._content is None:
+			return None
+
+		if self._content_type is 'abstract':
+			return self._content
+
+		if num_chars is 0:
+			num_chars = self.num_chars
+		
+		out = ''
+
+		for c in self._content:
+			if c['type'] == 'paragraph':
+				out += c['text'] + '\n'
+			elif c['type'] == 'list':
+				out += self._parse_content_list(c['elements'])
+			if not num_chars is -1:
+				if len(out) >= num_chars:
+					break
+
+		return out
+
+	def get_public_url(self, article = None):
+		if article is None:
+			return self._url
+		else:
+			return self._ART_URL + article
+
+	def search(self, article_name):
+		search_params = {}
+		search_params['query'] = article_name
+		search_params['limit'] = 1
+		
+		try:
+			search_dump = requests.get(self._API_SEARCH_URL, params = search_params).json()
+		except:
+			traceback.print_exc()
+			exit()
+
+		try:
+			self._url = search_dump['items'][0]['url']
+			self._id = search_dump['items'][0]['id']
+		except:
+			try:
+				search_dump['exception']
+			except:
+				traceback.print_exc()
+				exit()
+			self._url = None
+			self._id = None
+
+	def set_bullet(s):
+		if not s is None and not s is '':
+			this._bullet = s
+
+	def set_indentor(s):
+		if not s is None and not s is '':
+			this._indent = s
+
+if __name__ == '__main__':
+	err_msg = 'rswiki [ -h ] [ -n char_limit ] article_name'
+
+	try:
+		opts, args = getopt(sys.argv[1:], "hn:")
+	except Exception as e:
+		print e
+		print err_msg
+		exit(1)
+
+	num_chars = 0
+
+	for flag, value in opts:
+		if flag == '-h':
+			print err_msg
+			exit(3)
+		elif flag == '-n':
+			if value is None: continue
+			try:
+				num_chars = int(value)
+				if num_chars < 4 or num_chars > 500:
+					raise TypeError()
+			except:
+				print '-n requires an integer argument more than 3 and less than 501'
+				print err_msg
+				exit(4)
+
+	if not args:
+		print err_msg
+		exit(2)
+
+	for arg in args:
+		rsw = rswiki(arg, num_chars = num_chars)
+		print rsw.get_content()
+		print
+		print rsw.get_public_url()

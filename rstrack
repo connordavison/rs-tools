@@ -1,0 +1,23 @@
+import requests
+
+if __name__ == "__main__":
+	err_msg = 'rstrackd [ -v ] user0 [ user1 [ user2 ... ]]'
+
+	try:
+		opts, args = getopt(sys.argv[1:], "v")
+	except:
+		print err_msg
+		exit(1)
+
+	verbose = False
+
+	for flag, value in opts:
+		if flag == '-v': verbose = True
+
+	if not args:
+		print err_msg
+		exit(2)
+
+	for arg in args:
+		r = requests.get("http://runetracker.org/updateUserJS.php?user=" + arg)
+		if verbose: print r.text

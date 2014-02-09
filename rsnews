@@ -1,0 +1,91 @@
+#!/usr/bin/python
+try:
+	from feedparser import feedparser
+	from errors import *
+	from getopt import getopt
+	import requests
+	import time
+	import traceback
+	import sys
+except ImportError as e:
+	print e
+	print 'Ensure that /usr/bin/python is a python 2.7 shell.'
+	exit(99)
+
+class rsnews:
+
+	__API_URL = 'http://services.runescape.com/m=news/latest_news.rss'
+
+	def __init__(self):
+		dump = feedparser.parse(self.__API_URL)
+		self.__logs = dump['entries']
+
+	def to_string(self, l = 10, links = True, titles = True, summaries = True):
+		if self.__logs == []:
+			return "Could not access RuneScape. Ensure there is an internet connection, and that RuneScape.com is up."
+		out = ""
+		i = 0
+		for log in self.__logs:
+			if i == l: break
+
+			if titles: print log['title'] + ":"
+			if summaries: print "\t" + log['summary']
+			if links: print log['link']
+
+			print
+			i += 1
+		return out 
+
+if __name__ == "__main__":
+	err_msg = 'rsnews [ -h ] [ -s ] [ -l ] [ -n num_posts ]'
+
+	try:
+		opts, args = getopt(sys.argv[1:], "hn:lst")
+	except:
+		print err_msg
+		exit(1)
+
+	limit = 10
+	summarise = False
+	links_only = False
+	titles_only = False
+
+	for flag, value in opts:
+		if flag == '-n':
+			if value is None: continue
+			try:
+				limit = int(value)
+			except:
+				print '-n requires an integer value'
+				print err_msg
+				exit(4)
+		elif flag == '-l':
+			links_only = True
+		elif flag == '-s':
+			summarise = True
+		elif flag == '-t':
+			titles_only = True
+		elif flag == '-h':
+			print err_msg
+			exit(3)
+
+	rsn = rsnews()
+
+	if links_only:
+		links = True
+		titles = False
+		summaries = False
+	elif summarise:
+		summaries = True
+		links = False
+		titles = False
+	elif titles_only:
+		summaries = False
+		links = False
+		titles = True
+	else:
+		summaries = True
+		links = True
+		titles = True
+
+	print rsn.to_string(l = limit, links = links, titles = titles, summaries = summaries)
