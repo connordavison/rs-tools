@@ -1,7 +1,6 @@
 #!/usr/bin/python
 try:
 	from feedparser import feedparser
-	from errors import *
 	from getopt import getopt
 	import requests
 	import time

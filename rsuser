@@ -1,6 +1,5 @@
 #!/usr/bin/python
 try:
-	from errors import *
 	from getopt import getopt
 	from levenshtein import distance
 	from metaphone import doublemetaphone
