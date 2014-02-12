@@ -148,7 +148,7 @@ if __name__ == "__main__":
 	for arg in args:
 		try:
 			rsu = rsuser(arg)
-		except CouldNotRetrieveDataException as e:
+		except Exception as e:
 			print e
 		print "-+-".center(42)
 		print "-+-".center(6) + arg.title().center(30) + " -+- ".center(6)
