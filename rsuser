@@ -1,5 +1,6 @@
 #!/usr/bin/python
 try:
+	from errors import *
 	from getopt import getopt
 	from levenshtein import distance
 	from metaphone import doublemetaphone
@@ -58,6 +59,9 @@ class rsuser:
 	def __init__(self, username):
 		self.username = username
 		dump = requests.get(self.__API_URL + username)
+		
+		dump.raise_for_status()
+		
 		self.__make__(dump)
 
 	def __make__(self, dump):
@@ -79,30 +83,23 @@ class rsuser:
 				return skill
 
 	def get_skill_by_match(self, skill_name):
+		possible_matches = list()
+
 		# save the metaphone of the skill requested to save time
 		skill_phon = doublemetaphone(skill_name)
 
-		possible_matches = list()
 		for skill in self.__skills:
 			# the lev distance of skill_name and skill[1]
 			pure_dist = distance(skill.get_name(), str(skill_name))
-
-			# the lev distance of the metaphones
+			
+			# the lev distance of the query and the skill name
 			phon_dist = distance(skill_phon[0], doublemetaphone(skill.get_name())[0])
 
-			# add this skill to the list of possibles as a
-			# tuple. Left is the skill id, right is the product 
-			# of distances.
-			possible_matches.append((skill,phon_dist,pure_dist))
-			# debug:
-			# print 'phon dist: ' + str(phon_dist) + ', pure_dist: ' + str(pure_dist) + ', skill: ' + str(skill)
+			possible_matches.append((skill,pure_dist,phon_dist))
 
-		# if we have multiple results
-		if len(possible_matches) > 0:
-			# rank the matches based on tuple right
-			ranked = sorted(possible_matches, key = lambda t: t[1]*t[2])
-
-			return ranked[0][0]
+		# rank the matches based on tuple right
+		ranked = sorted(possible_matches, key = lambda t: t[1]*t[2])
+		return ranked[0][0]
 
 	def get_skills(self):
 		return self.__skills
@@ -149,7 +146,10 @@ if __name__ == "__main__":
 
 
 	for arg in args:
-		rsu = rsuser(arg)
+		try:
+			rsu = rsuser(arg)
+		except CouldNotRetrieveDataException as e:
+			print e
 		print "-+-".center(42)
 		print "-+-".center(6) + arg.title().center(30) + " -+- ".center(6)
 		print "-+-".center(42)

@@ -1,7 +1,15 @@
-import requests
+#!/usr/bin/python
+try:
+	from getopt import getopt
+	import requests
+	import sys
+except ImportError as e:
+	print e
+	print 'Ensure that /usr/bin/python is a python 2.7 shell.'
+	exit(99)
 
 if __name__ == "__main__":
-	err_msg = 'rstrackd [ -v ] user0 [ user1 [ user2 ... ]]'
+	err_msg = 'rstrack [ -v ] user0 [ user1 [ user2 ... ]]'
 
 	try:
 		opts, args = getopt(sys.argv[1:], "v")

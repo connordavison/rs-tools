@@ -8,6 +8,7 @@ try:
 	from errors import *
 	from getopt import getopt
 	from levenshtein import distance
+	import os
 	import re
 	import requests
 	import time
@@ -35,27 +36,22 @@ class rsitem:
 	# what items are tradeable
 	cfg_tradeables = 'cfg_tradeables.txt'
 
-	# levenshtein tolerance for matching pure strings (dist < _pure_tol)
-	_pure_tol = 5
-	
-	# levenshtein tolerance for matching phonetic strings (dist < _phon_tol)
-	_phon_tol = 3
-
 	def __init__(self, item_name):
 		#print 'Loading item database ...'
 
 		# load tradeable item db
 		self.tradeables = list()
 		try:
-			with open(self.cfg_tradeables) as cfg:
+			with open(os.path.dirname(os.path.realpath(__file__)) + '/' + self.cfg_tradeables) as cfg:
 				for l in cfg:
 					l = l.split('\t')
 					l[1] = l[1].lower()
 					l[1] = re.sub('[\n\r]', '', l[1])
 					l[0] = int(l[0])
 					self.tradeables.append(l)
-		except Exception:
+		except Exception as e:
 			print 'Error in tradeables configuration. Exiting.'
+			print e
 			exit(1)
 
 		self.__make__(item_name)
@@ -83,19 +79,9 @@ class rsitem:
 			# debug:
 			# print 'phon dist: ' + str(phon_dist) + ', pure_dist: ' + str(pure_dist) + ', item: ' + str(item)
 
-		# if we have multiple results
-		if len(possible_matches) > 0:
-			# rank the matches based on tuple right
-			ranked = sorted(possible_matches, key = lambda t: t[1]*t[2])
-
-			# find the first legal ranked item and return
-			for i in range(len(ranked)):
-				if ranked[i][1] < self._phon_tol and ranked[i][2] < self._pure_tol:
-					self._id = ranked[i][0][0]
-					self._name = ranked[i][0][1]
-					return ranked[i][0]
-
-		raise NoSuchItemError('No item could be found by the specified name.')
+		# rank the matches based on tuple right
+		ranked = sorted(possible_matches, key = lambda t: t[1]*t[2])
+		return ranked[0][0]
 
 	def get_change_today(self):
 		return self.__change_today
@@ -117,45 +103,45 @@ class rsitem:
 		
 	def get_public_url(self):
 		try:
-			return self.__ART_URL + self._name.replace(' ','_') + '/' \
-				+ self.__ART_SCRIPT + str(self._id)
-		except:
+			return self.__ART_URL + self.get_name().replace(' ','_') + '/' \
+				+ self.__ART_SCRIPT + str(self.get_id())
+		except Exception as e:
+			print e
 			return None
 
 	def get_type(self):
 		return self.__type
 
 	def __make__(self, item_name):
-		try:
-			#get main details
-			item_id = self.get_item_by_match(item_name)[0]
+		#get main details
+		item_id = self.get_item_by_match(item_name)[0]
 
-			params = {}
-			params['item'] = item_id
+		params = {}
+		params['item'] = item_id
 
-			dump = requests.get(self.__API_URL, params = params)
+		dump = requests.get(self.__API_URL, params = params)
 
-			dump = dump.json()['item']
-			
-			self.__name = dump['name']
-			self.__type = dump['type']
-			self.__description = dump['description']
-			self.__price = dump['current']['price']
-			self.__change_today = dump['today']['price']
+		dump.raise_for_status()
 
-			#get details about price history (daily and average)
-			dump = requests.get(self.__HISTORY_API_URL + str(item_id) + '.json').json()
-			self.__daily_history = dump['daily']
-			self.__average_history = dump['daily']
-		except Exception as e:
-			print e
+		dump = dump.json()['item']
+		
+		self.__id = dump['id']
+		self.__name = dump['name']
+		self.__type = dump['type']
+		self.__description = dump['description']
+		self.__price = dump['current']['price']
+		self.__change_today = dump['today']['price']
+
+		#get details about price history (daily and average)
+		dump = requests.get(self.__HISTORY_API_URL + str(item_id) + '.json').json()
+		self.__daily_history = dump['daily']
 
 	def to_string(self):
 		out =  'Name:         ' + self.get_name() + '\n'
 		out += 'Type:         ' + self.get_type() + '\n'
 		out += 'Description:  ' + self.get_description() + '\n'
-		out += 'Price:        ' + self.get_price() + '\n'
-		out += 'Change today: ' + self.get_change_today() + '\n\n'
+		out += 'Price:        ' + str(self.get_price()) + '\n'
+		out += 'Change today: ' + str(self.get_change_today()) + '\n\n'
 
 		out += self.get_public_url()
 		return out
@@ -163,18 +149,8 @@ class rsitem:
 	def to_string_avg_history(self, limit = 10):
 		out =  'Name:         ' + self.get_name() + '\n'
 		i = 0
-		keys = reversed(self.__average_history.keys())
-		for k in keys:
-			if i > limit - 1: break
-			v = self.__daily_history[k]
-			out += str(datetime.fromtimestamp(long(k)/1000.0)) + ":\t" + str(v) + "\n"
-			i += 1
-		return out
-
-	def to_string_daily_history(self, limit = 10):
-		out = ""
-		i = 0
-		keys = reversed(self.__daily_history.keys())
+		#keys = reversed(self.__average_history.keys())
+		keys = reversed(sorted(self.__average_history.keys()))
 		for k in keys:
 			if i > limit - 1: break
 			v = self.__daily_history[k]
