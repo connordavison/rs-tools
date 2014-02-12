@@ -158,10 +158,30 @@ class rsitem:
 		return out
 
 if __name__ == "__main__":
-	err_msg = 'rsge [ -h ] [ -i ] [ item_name ]'
-
+	err_msg = 'rsge [ -hipa ] [ -P num_records ] item0 [ item1 [ item2 ... ]]'
+	help_msg = 'NAME:\n' + \
+		'\trsge - retrieve information from the Grand Exchange.\n\n' + \
+		'USAGE:\n' + \
+		'\trsge [OPTIONS] item0 [ item1 [ item2 ... ]]\n\n' + \
+		'\tObtains information about items item0, item1, item2, etc. This script\n' + \
+		'\tutilises a local database (stored in the same directory as this script)\n' + \
+		'\tentitled \'cfg_tradeables.txt\' by default. In this database are item\n' + \
+		'\tname/ID pairs in the format:\n\n' + \
+		'\t\tNAME\\tID\\n\n\n' + \
+		'\tThis script uses a string comparison algorithm to find the best matches\n' + \
+		'\tfor particular queries. For example, the string `abyzzul_wip` would\n' + \
+		'\tconveniently match `Abyssal whip` in the database.\n\n'
+		'OPTIONS:\n' + \
+		'\t-h\n' + \
+		'\t\tDisplay this help text.\n\n' + \
+		'\t-i\n' + \
+		'\t\tPrint item ID.\n\n' + \
+		'\t-p\n' + \
+		'\t\tPrint price history.\n\n' + \
+		'\t-P num_records\n' + \
+		'\t\tPrint `num_records` records.\n'
 	try:
-		opts, args = getopt(sys.argv[1:], "hipP:a")
+		opts, args = getopt(sys.argv[1:], "hipP:")
 	except:
 		print err_msg
 		exit(1)
@@ -186,8 +206,8 @@ if __name__ == "__main__":
 		elif flag == '-a':
 			print_average_history = True
 		elif flag == '-h':
-			print err_msg
-			exit(3)
+			print help_msg
+			exit(0)
 
 	if not args:
 		print err_msg
@@ -198,9 +218,6 @@ if __name__ == "__main__":
 		if print_id:
 			print rsi.get_id()
 		if print_history:
-			if print_average_history:
-				print rsi.to_string_avg_history()
-			else:
-				print rsi.to_string_daily_history()
+			print rsi.to_string_avg_history(limit = num_records)
 		else:
 			print rsi.to_string()

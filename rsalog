@@ -38,6 +38,19 @@ class rsalog:
 
 if __name__ == "__main__":
 	err_msg = 'rsalog [ -h ] [ -s ] [ -l limit ] user0 [ user1 [ user2 ... ]]'
+	help_msg = 'NAME:\n' + \
+		'\trsalog - output the most recent events in particular users\' \n' + \
+		'\tadventurers log.\n\n' + \
+		'USAGE:\n' + \
+		'\trsalog [OPTIONS] user0 [ user1 [ user2 ... ]]\n\n' + \
+		'\tOutputs adventurers logs for users user0, user1, user2, etc.\n\n' + \
+		'OPTIONS:\n' + \
+		'\t-h\n' + \
+		'\t\tDisplay this help text.\n\n' + \
+		'\t-l limit\n' + \
+		'\t\tRead `limit` logs, up to `limit`=10.\n\n' + \
+		'\t-m\n' + \
+		'\t\tDisplay the entire log message.\n'
 
 	try:
 		opts, args = getopt(sys.argv[1:], "hl:m")
@@ -60,8 +73,8 @@ if __name__ == "__main__":
 		elif flag == '-m':
 			show_more = True
 		elif flag == '-h':
-			print err_msg
-			exit(3)
+			print help_msg
+			exit(0)
 
 	if not args:
 		print err_msg

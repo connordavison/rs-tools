@@ -13,13 +13,13 @@ except ImportError as e:
 
 class rsnews:
 
-	__API_URL = 'http://services.runescape.com/m=news/latest_news.rss'
+	__RSS_URL = 'http://services.runescape.com/m=news/latest_news.rss'
 
 	def __init__(self):
-		dump = feedparser.parse(self.__API_URL)
+		dump = feedparser.parse(self.__RSS_URL)
 		self.__logs = dump['entries']
 
-	def to_string(self, l = 10, links = True, titles = True, summaries = True):
+	def to_string(self, l = 10):
 		if self.__logs == []:
 			return "Could not access RuneScape. Ensure there is an internet connection, and that RuneScape.com is up."
 		out = ""
@@ -27,16 +27,26 @@ class rsnews:
 		for log in self.__logs:
 			if i == l: break
 
-			if titles: print log['title'] + ":"
-			if summaries: print "\t" + log['summary']
-			if links: print log['link']
+			out += log['title'] + "\n"
+			out += "\t" + log['summary'] + "\n"
+			out += "\t" + log['published'] + "\n"
+			out += log['link'] + "\n\n"
 
 			print
 			i += 1
 		return out 
 
 if __name__ == "__main__":
-	err_msg = 'rsnews [ -h ] [ -s ] [ -l ] [ -n num_posts ]'
+	err_msg = 'rsnews [ -h ] [ -n num_posts ]'
+	help_msg = 'NAME:\n' + \
+		'\trsnews - displays the most recent news from RuneScape.\n\n' + \
+		'USAGE:\n' + \
+		'\trsnews [OPTIONS]\n\n' + \
+		'OPTIONS:\n' + \
+		'\t-h\n' + \
+		'\t\tDisplay this help text.\n\n' + \
+		'\t-n num_posts\n' + \
+		'\t\tDisplay `num_posts` news posts.\n'
 
 	try:
 		opts, args = getopt(sys.argv[1:], "hn:lst")
@@ -45,9 +55,6 @@ if __name__ == "__main__":
 		exit(1)
 
 	limit = 10
-	summarise = False
-	links_only = False
-	titles_only = False
 
 	for flag, value in opts:
 		if flag == '-n':
@@ -58,33 +65,10 @@ if __name__ == "__main__":
 				print '-n requires an integer value'
 				print err_msg
 				exit(4)
-		elif flag == '-l':
-			links_only = True
-		elif flag == '-s':
-			summarise = True
-		elif flag == '-t':
-			titles_only = True
 		elif flag == '-h':
-			print err_msg
-			exit(3)
+			print help_msg
+			exit(0)
 
 	rsn = rsnews()
 
-	if links_only:
-		links = True
-		titles = False
-		summaries = False
-	elif summarise:
-		summaries = True
-		links = False
-		titles = False
-	elif titles_only:
-		summaries = False
-		links = False
-		titles = True
-	else:
-		summaries = True
-		links = True
-		titles = True
-
-	print rsn.to_string(l = limit, links = links, titles = titles, summaries = summaries)
+	print rsn.to_string(l = limit)

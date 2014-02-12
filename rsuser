@@ -111,7 +111,30 @@ class rsuser:
 
 
 if __name__ == "__main__":
-	err_msg = 'Usage:\trsuser [ -h ] [ -a ] [ -g ] [ -o ] [ -s skill ] user0 [ user1 [ user 2 ... ]]'
+	err_msg = 'Usage:\trsuser [ -hcago ] [ -s skill ] user0 [ user1 [ user 2 ... ]]'
+	help_msg = 'NAME:\n' + \
+		'\trsuser - display a user\'s stats.\n\n' + \
+		'USAGE:\n' + \
+		'\trsuser [OPTIONS] user0 [ user1 [ user 2 ... ]]\n\n' + \
+		'\tuser0, user1, ... are all usernames. Each users\' stats are\n' + \
+		'\tdisplayed in turn.\n\n' + \
+		'OPTIONS:\n' + \
+		'\t-h\n' + \
+		'\t\tDisplay this help text.\n\n' + \
+		'\t-c\n' + \
+		'\t\tDisplay all combat skills.\n\n' + \
+		'\t-a\n' + \
+		'\t\tDisplay all artisan skills.\n\n' + \
+		'\t-g\n' + \
+		'\t\tDisplay all gathering skills.\n\n' + \
+		'\t-o\n' + \
+		'\t\tDisplay all other skills.\n\n' + \
+		'\t-s skill\n' + \
+		'\t\tDisplay a particular skill. Multiple skills can be requested by\n' + \
+		'\t\tcomma separation:\n\n' + \
+		'\t\t\tMagic,summoning,runecrafting\n\n' + \
+		'\t\tThe script corrects misspellings to a good degree.\n'
+
 
 	try:
 		opts, args = getopt(sys.argv[1:], "hs:cgao")
@@ -119,18 +142,13 @@ if __name__ == "__main__":
 		print 'Could not get options.'
 		print err_msg
 		exit(1)
-	
-	if not args:
-		print 'No arguments supplied.'
-		print err_msg
-		exit(2)
 
 	skill = ""
 
 	for flag, value in opts:
 		if flag == '-h':
-			print err_msg
-			exit(3)
+			print help_msg
+			exit(0)
 		elif flag == '-c':
 			skill += 'attack,strength,defence,ranged,mage,constitution,prayer,summoning'
 		elif flag == '-g':
@@ -143,6 +161,10 @@ if __name__ == "__main__":
 			if value is None: continue
 			skill = value
 
+	if not args:
+		print 'No arguments supplied.'
+		print err_msg
+		exit(2)
 
 	for arg in args:
 		try:

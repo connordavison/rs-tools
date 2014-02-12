@@ -236,7 +236,18 @@ class rswiki:
 
 if __name__ == '__main__':
 	err_msg = 'rswiki [ -h ] [ -n char_limit ] article_name'
-
+	help_msg = 'NAME:\n' + \
+		'\trswiki - retrieve a short excerpt from a RuneScape Wikia article.\n\n' + \
+		'USAGE:\n' + \
+		'\trswiki [OPTIONS] article0 [ article1 [ article2 ... ]]\n\n' + \
+		'\tShow information about articles article0, article1, etc.\n\n' + \
+		'OPTIONS:\n' + \
+		'\t-h\n' + \
+		'\t\tDisplay this help text.\n\n' + \
+		'\t-n char_limit\n' + \
+		'\t\tPrint at most `char_limit` characters, to the nearest word.\n' + \
+		'\t\t3 < `char_limit` < 501\n'
+	
 	try:
 		opts, args = getopt(sys.argv[1:], "hn:")
 	except Exception as e:
@@ -248,8 +259,8 @@ if __name__ == '__main__':
 
 	for flag, value in opts:
 		if flag == '-h':
-			print err_msg
-			exit(3)
+			print help_msg
+			exit(0)
 		elif flag == '-n':
 			if value is None: continue
 			try:
@@ -267,6 +278,9 @@ if __name__ == '__main__':
 
 	for arg in args:
 		rsw = rswiki(arg, num_chars = num_chars)
+		if rsw.get_content() is None:
+			print 'Article not found... Try again.'
+			break
 		print rsw.get_content()
 		print
 		print rsw.get_public_url()
