@@ -35,6 +35,9 @@ class rsitem:
 	# what items are tradeable
 	cfg_tradeables = 'cfg_tradeables.txt'
 
+	# Extracts item list from configuration file (cfg_tradeables.txt) and
+	# places them in self.tradeables. After complete, executes the __makes__
+	# method which fetches data from the API and constructs this object.
 	def __init__(self, item_name):
 		#print 'Loading item database ...'
 
@@ -132,8 +135,14 @@ class rsitem:
 		self.__change_today = dump['today']['price']
 
 		#get details about price history (daily and average)
-		dump = requests.get(self.__HISTORY_API_URL + str(item_id) + '.json').json()
+		dump = requests.get(self.__HISTORY_API_URL + str(item_id) + '.json')
+
+		dump.raise_for_status()
+
+		dump = dump.json()
+		
 		self.__daily_history = dump['daily']
+		self.__average_history = dump['average']
 
 	def to_string(self):
 		out =  'Name:         ' + self.get_name() + '\n'
@@ -170,7 +179,7 @@ if __name__ == "__main__":
 		'\t\tNAME\\tID\\n\n\n' + \
 		'\tThis script uses a string comparison algorithm to find the best matches\n' + \
 		'\tfor particular queries. For example, the string `abyzzul_wip` would\n' + \
-		'\tconveniently match `Abyssal whip` in the database.\n\n'
+		'\tconveniently match `Abyssal whip` in the database.\n\n' + \
 		'OPTIONS:\n' + \
 		'\t-h\n' + \
 		'\t\tDisplay this help text.\n\n' + \
