@@ -49,7 +49,7 @@ if __name__ == "__main__":
 		'\t\tDisplay `num_posts` news posts.\n'
 
 	try:
-		opts, args = getopt(sys.argv[1:], "hn:lst")
+		opts, args = getopt(sys.argv[1:], "hn:")
 	except:
 		print err_msg
 		exit(1)
