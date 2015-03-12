@@ -230,7 +230,7 @@ class rswiki:
 		if not s is None and not s is '':
 			this._bullet = s
 
-	def set_indentor(s):
+	def set_indenter(s):
 		if not s is None and not s is '':
 			this._indent = s
 
@@ -243,13 +243,10 @@ if __name__ == '__main__':
 		'\tShow information about articles article0, article1, etc.\n\n' + \
 		'OPTIONS:\n' + \
 		'\t-h\n' + \
-		'\t\tDisplay this help text.\n\n' + \
-		'\t-n char_limit\n' + \
-		'\t\tPrint at most `char_limit` characters, to the nearest word.\n' + \
-		'\t\t3 < `char_limit` < 501\n'
+		'\t\tDisplay this help text.\n\n'
 	
 	try:
-		opts, args = getopt(sys.argv[1:], "hn:")
+		opts, args = getopt(sys.argv[1:], "h")
 	except Exception as e:
 		print e
 		print err_msg
@@ -261,23 +258,13 @@ if __name__ == '__main__':
 		if flag == '-h':
 			print help_msg
 			exit(0)
-		elif flag == '-n':
-			if value is None: continue
-			try:
-				num_chars = int(value)
-				if num_chars < 4 or num_chars > 500:
-					raise TypeError()
-			except:
-				print '-n requires an integer argument more than 3 and less than 501'
-				print err_msg
-				exit(4)
 
 	if not args:
 		print err_msg
 		exit(2)
 
 	for arg in args:
-		rsw = rswiki(arg, num_chars = num_chars)
+		rsw = rswiki(arg)
 		if rsw.get_content() is None:
 			print 'Article not found... Try again.'
 			break
