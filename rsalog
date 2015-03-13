@@ -11,8 +11,6 @@ except ImportError as e:
 	print 'Ensure that /usr/bin/python is a python 2.7 shell.'
 	exit(99)
 
-
-
 class rsalog:
 
 	__API_URL = 'http://services.runescape.com/m=adventurers-log/a=13/rssfeed?searchName='
