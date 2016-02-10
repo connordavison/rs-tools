@@ -1,0 +1,62 @@
+#!/usr/bin/env python
+
+import cli.app
+from runescape import highscores
+from runescape import items
+from runescape import rss
+from runescape import track
+from runescape import wiki
+
+
+class App(cli.app.CommandLineApp):
+    """A command line helper to retrieve information from RuneScape.
+
+    adv       : Retrieve the latest activity from a user's adventurer's log.
+    item      : Obtain the price for an item by its ID.
+    item-dump : Create the most recent item data list from the Grand Exchange 
+                API.
+    news      : Get the latest RuneScape news.
+    track     : Ping runetracker.org to update a particular user.
+    user      : Retrieve stats for a user.
+    wiki      : Get an article from RuneScape's unofficial Wiki.
+    """
+    subapps = {
+        highscores.App: ['highscore', 'highscores', 'hs', 'user'],
+        items.ItemIDDumpApp: ['dump', 'item-dump', 'generate-id-list'],
+        items.PriceApp: ['item'],
+        track.App: ['track'],
+        rss.AdventurersLogApp: ['adv', 'alog', 'log'],
+        rss.NewsApp: ['news'],
+        wiki.App: ['wiki', 'wikia']
+    }
+
+    def main(self):
+        command = self.params.command.lower()
+
+        for SubApp, aliases in self.subapps.items():
+            if command in aliases:
+                subapp = SubApp(argv=self.proxied_argv)
+                subapp.run()
+
+    def setup(self):
+        """
+        Initialise the parameter list for this CommandLineApp.
+        """
+        # There are only two arguments to this app: the script name, and the
+        # command/help flag. All arguments, save for this script name will be
+        # sent to the subapp.
+        if len(self.argv) > 1:
+            self.proxied_argv = self.argv[1::]
+            self.argv = self.argv[0:2]
+
+        cli.app.CommandLineApp.setup(self)
+
+        self.add_param(
+            'command', type=str,
+            help="the command to execute, " + \
+                "one of [adv|item|item-dump|news|track|user|wiki]."
+        )
+
+if "__main__" == __name__:
+    rs = App()
+    rs.run()

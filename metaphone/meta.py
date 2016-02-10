@@ -1,8 +1,0 @@
-display_name = "Metaphone"
-library_name = "metaphone"
-version = "0.4"
-author = "Andrew Collins"
-author_email = "AtomBoy@SWCP.com"
-license = "BSD"
-url = "https://github.com/oubiwann/metaphone"
-description = "A Python implementation of the metaphone algorithms."
