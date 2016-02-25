@@ -23,7 +23,7 @@ class App(cli.app.CommandLineApp):
     subapps = {
         highscores.App: ['highscore', 'highscores', 'hs', 'user'],
         items.ItemIDDumpApp: ['dump', 'item-dump', 'generate-id-list'],
-        items.PriceApp: ['item'],
+        items.PriceApp: ['ge', 'item'],
         track.App: ['track'],
         rss.AdventurersLogApp: ['adv', 'alog', 'log'],
         rss.NewsApp: ['news'],
@@ -37,6 +37,8 @@ class App(cli.app.CommandLineApp):
             if command in aliases:
                 subapp = SubApp(argv=self.proxied_argv)
                 subapp.run()
+
+        print("Invalid command given.")
 
     def setup(self):
         """
