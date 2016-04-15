@@ -38,6 +38,7 @@ class App(cli.app.CommandLineApp):
             else:       print("User has not changed.")
 
     def setup(self):
+        cli.app.CommandLineApp.setup(self)
         self.add_param(
             'users',
             default=None, help="the users to update", nargs='+', type=str
