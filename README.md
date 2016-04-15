@@ -31,7 +31,7 @@ optional arguments:
 To obtain more information about the usage of a particular module, run `rs module-alias -h`. A brief description of each of the available modules follows:
 
 | Module | Aliases | Description |
-| - | - | - |
+| --- | --- | --- |
 | Adventurer's Log | `adv`, `alog`, `log` | Fetch a user's recent activity. |
 | Price History | `ge`, `item` | Fetch a JSON representation of the recent price history of an item by its item ID. |
 | Item ID Dump | `dump`, `item-dump`, `generate-id-list` | Generate a JSON dump of the entire list of tradeable items from RuneScape's Grand Exchange database. This command may run for a very long time. |
