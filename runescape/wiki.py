@@ -27,15 +27,15 @@ class App(cli.app.CommandLineApp):
         Initialise the parameter list for this CommandLineApp.
         """
         cli.app.CommandLineApp.setup(self)
-        
+
         self.add_param(
-            'title', 
+            'title',
             help="the title of the article to display", type=str
         )
 
         self.add_param(
             '-m', '--more',
-            default=False, help="show other skills", action='store_true'
+            default=False, help="show more details", action='store_true'
         )
 
 if "__main__" == __name__:
